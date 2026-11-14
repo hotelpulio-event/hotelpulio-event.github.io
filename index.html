@@ -864,10 +864,10 @@ function result(win){
     </div>
     <div class="chancebox">
       <div><span class="eyebrow">내 참여기회</span><b id="chanceR">${left2}회 남음</b></div>
-      <p>친구가 내 링크로 체크인하면 <b>+1회</b>씩 늘어나요${LIMIT_PLAYS?"":" (테스트 중이라 지금은 계속 플레이할 수 있어요)"}</p>
+      <p><b>공유하기</b>를 누르면 참여기회가 <b>+1회</b> 바로 늘어나요 <small>(한 판에 1번)</small>${LIMIT_PLAYS?"":" (테스트 중이라 지금은 계속 플레이할 수 있어요)"}</p>
       <div class="sharestat" id="shareStat">${shareStatHTML(getShareStats())}</div>
     </div>
-    <button class="btn" id="again">${noChance?"공유하고 참여기회 받기":win?"다시 체크인하기":"다시 도전하기"}</button>
+    <button class="btn" id="again" data-label="${win?"다시 체크인하기":"다시 도전하기"}">${noChance?"공유하고 참여기회 받기":win?"다시 체크인하기":"다시 도전하기"}</button>
     <button class="btn ghost" id="share">공유하기</button>
   </section>`;
   if(!elev.classList.contains("on")) arrive(win?top:reached, win?"VIP 리커버리 키가 준비되었습니다":"시간 초과! 엘리베이터가 멈췄어요", win?"arrive":"stop");
@@ -916,12 +916,27 @@ function shareStatHTML(st){
 }
 
 /* 공유하기 화면 */
+async function grantShare(t){
+  if(!API_ON){
+    const c=chanceState();
+    if((c.refs||0)<(c.used||0)){ c.refs=(c.refs||0)+1; try{ localStorage.setItem("gp_chance",JSON.stringify(c)); }catch(e){} t.textContent+=" 참여기회 +1!"; }
+    refreshChance(); return;
+  }
+  const res=await api("share",{uid:getUid()});
+  if(res&&res.ok){ applyServer(res); t.textContent+= res.added ? " 참여기회 +1!" : " (이번 판 공유 보너스는 이미 받았어요)"; }
+  refreshChance();
+}
+function refreshChance(){
+  const cr=$("#chanceR"); if(cr) cr.textContent=chancesLeft()+"회 남음";
+  const ag=$("#again"); if(ag&&LIMIT_PLAYS) ag.textContent= chancesLeft()<=0 ? "공유하고 참여기회 받기" : (ag.dataset.label||"다시 도전하기");
+  const n=$("#chanceN"); if(n) n.textContent=chanceText();
+}
 function openShare(text){
   const m=document.createElement("div"); m.className="modal"; m.setAttribute("role","dialog"); m.setAttribute("aria-label","공유하기");
   m.innerHTML=`<div class="msheet">
     <div class="eyebrow">Share</div>
     <h2>친구에게 공유하기</h2>
-    <p class="mlead">친구가 이 링크로 들어와 체크인하면<br>내 참여기회가 <b>1회</b> 늘어나요.<br><small>공유왕은 <b>번호를 남긴 친구</b>만 집계돼요.</small></p>
+    <p class="mlead">문구와 링크를 복사하면<br>내 참여기회가 <b>바로 1회</b> 늘어나요. <small>(한 판에 1번)</small><br><small>공유왕은 <b>번호를 남긴 친구</b>만 집계돼요.</small></p>
     <textarea class="copy" id="sharetext" rows="4" readonly>${esc(text)}</textarea>
     <button class="btn" id="copy">문구와 링크 복사</button>
     <div class="toast" id="toast" role="status"></div>
@@ -935,7 +950,8 @@ function openShare(text){
   m.querySelector("#copy").onclick=()=>{
     const ta=m.querySelector("#sharetext"), t=m.querySelector("#toast");
     const fallback=()=>{ ta.focus(); ta.select(); t.textContent="문구를 선택했어요. 복사해서 붙여넣어 주세요."; };
-    try{ navigator.clipboard.writeText(ta.value).then(()=>{ t.textContent="복사됐어요! 카톡이나 문자에 붙여넣어 보내세요."; },fallback); }catch(e){ fallback(); }
+    const done=()=>grantShare(t);
+    try{ navigator.clipboard.writeText(ta.value).then(()=>{ t.textContent="복사됐어요! 카톡이나 문자에 붙여넣어 보내세요."; done(); },()=>{ fallback(); done(); }); }catch(e){ fallback(); done(); }
   };
   m.querySelector("#copy").focus();
 }
