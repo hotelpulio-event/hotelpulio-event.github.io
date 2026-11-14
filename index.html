@@ -300,6 +300,7 @@ input::placeholder{color:var(--muted)}
 .chancebox p{margin:0;font-size:13px;color:var(--muted)}
 .chancebox p b{color:var(--ink)}
 .plate .chance{margin:0;font-size:12px;color:var(--muted)}
+.plate .invite{margin:0;padding:4px 6px;background:none;border:0;color:var(--gold);font:inherit;font-size:12.5px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .plate .chance b{color:var(--gold)}
 .modal{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center;background:rgba(20,13,45,.7);backdrop-filter:blur(4px);
   padding:16px max(16px,env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
@@ -498,6 +499,13 @@ function chanceState(){ try{ return JSON.parse(localStorage.getItem("gp_chance")
 function chancesLeft(){ if(S.server) return S.server.chances; const c=chanceState(); return Math.max(0, BASE_CHANCES + (c.refs||0) - (c.used||0)); }
 function useChance(){ try{ const c=chanceState(); c.used=(c.used||0)+1; localStorage.setItem("gp_chance",JSON.stringify(c)); }catch(e){} }
 function bestRecord(){ try{ return JSON.parse(localStorage.getItem("gp_best")||"null"); }catch(e){ return null; } }
+/* 첫 화면 공유: 한 번이라도 플레이했거나 기회가 0회일 때 보여줌 */
+const showInvite=()=> !!bestRecord() || !!(S.server && S.server.chances<=0);
+function inviteText(){
+  const b=normBest(bestRecord()), nick=(S.nick||($("#nick")&&$("#nick").value.trim())||"친구").slice(0,10);
+  const tok= b ? `vs.${b.cleared}.${b.found||0}.${Math.round((b.time||0)*10)}.${toHex(nick)}.${getUid()}` : `r.${getUid()}`;
+  return SHARE_MSG()+(SHARE_URL?"\n"+SHARE_URL+"#"+tok:"");
+}
 function loadProfile(){ try{ const p=JSON.parse(localStorage.getItem("gp_profile")||"null"); if(p&&!S.nick){ S.nick=p.nick||""; S.phone=p.phone||""; S.cPriv=!!p.cPriv; S.cSms=!!p.cSms; } }catch(e){} }
 function saveProfile(){ try{ localStorage.setItem("gp_profile",JSON.stringify({nick:S.nick,phone:S.phone,cPriv:S.cPriv,cSms:S.cSms})); }catch(e){} }
 const chanceText=()=> (API_ON&&!S.server) ? "확인 중…" : chancesLeft()+"회";
@@ -517,7 +525,7 @@ function intro(){
           <div class="eyebrow">Check-in Challenge</div>
           <div class="t">HOTEL PULIO</div>
           <p class="s">층마다 30초 · 숨은 낱말을 모두 찾으면 다음 층으로</p>
-          ${S.rival?`<p class="rival">${esc(S.rival.nick)} 님의 기록 <b>${recLabel(S.rival)}</b> 을 넘어보세요</p>`:""}
+          ${S.rival&&!S.rival.invite?`<p class="rival">${esc(S.rival.nick)} 님의 기록 <b>${recLabel(S.rival)}</b> 을 넘어보세요</p>`:""}
           <div class="form">
             <label for="nick" class="sr">닉네임 (필수)</label>
             <input type="text" id="nick" maxlength="10" placeholder="닉네임 (필수)" value="${esc(S.nick)}" autocomplete="nickname">
@@ -549,6 +557,7 @@ function intro(){
               </details>
             </div>
             <p class="chance">남은 참여기회 <b id="chanceN">${chanceText()}</b></p>
+            <button type="button" class="invite" id="invite" ${showInvite()?"":"hidden"}>🔗 공유하고 참여기회 받기</button>
             <p class="err" id="err" role="alert"></p>
           </div>
           <p class="hint">오른쪽 열림 버튼을 눌러 탑승하세요 →</p>
@@ -570,7 +579,8 @@ function intro(){
     consentEl.hidden=!d.length;
   });
   if(API_ON && !S.visited){ S.visited=true; const ru=(S.rival && S.rival.uid && S.rival.uid!==getUid()) ? S.rival.uid : ""; api("visit",{uid:getUid(), ref:!!ru, refUid:ru}); }
-  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chanceText(); } });
+  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chanceText(); const iv=$("#invite"); if(iv) iv.hidden=!showInvite(); } });
+  $("#invite").onclick=()=>openShare(inviteText());
   const cAll=$("#cAll"), cPriv=$("#cPriv"), cSms=$("#cSms");
   cAll.addEventListener("change",()=>{ cPriv.checked=cSms.checked=cAll.checked; });
   [cPriv,cSms].forEach(c=>c.addEventListener("change",()=>{ cAll.checked=cPriv.checked&&cSms.checked; }));
@@ -579,7 +589,7 @@ function intro(){
     const h=$("#hall"); if(h.dataset.busy) return;
     const nick=$("#nick").value.trim(), digits=phoneEl.value.replace(/\D/g,"");
     if(!nick) return fail("닉네임을 입력해 주세요.",$("#nick"));
-    if(LIMIT_PLAYS && (!API_ON||S.server) && chancesLeft()<=0) return fail("참여기회를 모두 썼어요. 친구가 내 링크로 체크인하면 1회가 추가돼요.",$("#nick"));
+    if(LIMIT_PLAYS && (!API_ON||S.server) && chancesLeft()<=0) return fail("참여기회를 모두 썼어요. 아래 공유하기로 친구가 접속하면 1명당 1회가 추가돼요.",$("#nick"));
     if(digits && !/^01[016789]\d{7,8}$/.test(digits)) return fail("휴대폰 번호를 다시 확인해 주세요.",phoneEl);
     if(digits && !$("#cPriv").checked) return fail("번호를 남기려면 개인정보 수집·이용에 동의해 주세요. 번호 없이도 참여할 수 있어요.",$("#cPriv"));
     $("#err").textContent="";
@@ -598,7 +608,7 @@ function intro(){
     if(st&&st.ok===false&&st.error==="no_chance"){
       applyServer(st);
       intro();
-      const e=$("#err"); if(e) e.textContent="참여기회를 모두 썼어요. 친구가 내 링크로 체크인하면 1회가 추가돼요.";
+      const e=$("#err"); if(e) e.textContent="참여기회를 모두 썼어요. 아래 공유하기로 친구가 접속하면 1명당 1회가 추가돼요.";
       return;
     }
     if(st&&st.ok) applyServer(st); else useChance();
@@ -773,6 +783,8 @@ const fromHex = h => new TextDecoder().decode(new Uint8Array(h.match(/../g).map(
 function challengeToken(R){ return `vs.${R.cleared}.${R.found}.${Math.round(R.time*10)}.${toHex(S.nick)}.${getUid()}`; }
 function readChallenge(){
   try{
+    const inv=location.hash.match(/^#r\.([a-z0-9]{4,40})$/);
+    if(inv) return {invite:true, uid:inv[1], nick:"", cleared:0, found:0, time:0, win:false, floor:1, rank:0};
     const m=location.hash.match(/^#vs\.(\d+)\.(\d+)\.(\d+)\.([0-9a-f]{2,80})(?:\.([a-z0-9]{4,40}))?$/);
     if(!m) return null;
     const cleared=+m[1], found=+m[2], time=+m[3]/10, top=FLOORS.length;
@@ -810,7 +822,7 @@ function result(win){
   }
 
   let vs="";
-  if(S.rival){
+  if(S.rival&&!S.rival.invite){
     const beat=R.rank>S.rival.rank;
     vs=`<div class="vs ${beat?"won":""}">
       <div class="side"><span>나</span><b>${recLabel(R)}</b></div>
@@ -928,6 +940,7 @@ async function grantShare(t){
 }
 function refreshChance(){
   const cr=$("#chanceR"); if(cr) cr.textContent=chancesLeft()+"회 남음";
+  const iv=$("#invite"); if(iv) iv.hidden=!showInvite();
   const ag=$("#again"); if(ag&&LIMIT_PLAYS) ag.textContent= chancesLeft()<=0 ? "공유하고 참여기회 받기" : (ag.dataset.label||"다시 도전하기");
   const n=$("#chanceN"); if(n) n.textContent=chanceText();
 }
