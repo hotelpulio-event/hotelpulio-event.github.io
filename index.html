@@ -498,9 +498,13 @@ function chanceState(){ try{ return JSON.parse(localStorage.getItem("gp_chance")
 function chancesLeft(){ if(S.server) return S.server.chances; const c=chanceState(); return Math.max(0, BASE_CHANCES + (c.refs||0) - (c.used||0)); }
 function useChance(){ try{ const c=chanceState(); c.used=(c.used||0)+1; localStorage.setItem("gp_chance",JSON.stringify(c)); }catch(e){} }
 function bestRecord(){ try{ return JSON.parse(localStorage.getItem("gp_best")||"null"); }catch(e){ return null; } }
+function loadProfile(){ try{ const p=JSON.parse(localStorage.getItem("gp_profile")||"null"); if(p&&!S.nick){ S.nick=p.nick||""; S.phone=p.phone||""; S.cPriv=!!p.cPriv; S.cSms=!!p.cSms; } }catch(e){} }
+function saveProfile(){ try{ localStorage.setItem("gp_profile",JSON.stringify({nick:S.nick,phone:S.phone,cPriv:S.cPriv,cSms:S.cSms})); }catch(e){} }
+const chanceText=()=> (API_ON&&!S.server) ? "확인 중…" : chancesLeft()+"회";
 function intro(){
   document.body.classList.remove("paper");
   stopTimer();
+  loadProfile();
   const best=bestRecord();
   app.innerHTML=`
   <section class="hall" id="hall">
@@ -544,7 +548,7 @@ function intro(){
                 </ul>
               </details>
             </div>
-            <p class="chance">남은 참여기회 <b id="chanceN">${chancesLeft()}회</b></p>
+            <p class="chance">남은 참여기회 <b id="chanceN">${chanceText()}</b></p>
             <p class="err" id="err" role="alert"></p>
           </div>
           <p class="hint">오른쪽 열림 버튼을 눌러 탑승하세요 →</p>
@@ -566,7 +570,7 @@ function intro(){
     consentEl.hidden=!d.length;
   });
   if(API_ON && !S.visited){ S.visited=true; api("visit",{uid:getUid(), ref:!!(S.rival && S.rival.uid && S.rival.uid!==getUid())}); }
-  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chancesLeft()+"회"; } });
+  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chanceText(); } });
   const cAll=$("#cAll"), cPriv=$("#cPriv"), cSms=$("#cSms");
   cAll.addEventListener("change",()=>{ cPriv.checked=cSms.checked=cAll.checked; });
   [cPriv,cSms].forEach(c=>c.addEventListener("change",()=>{ cAll.checked=cPriv.checked&&cSms.checked; }));
@@ -575,12 +579,13 @@ function intro(){
     const h=$("#hall"); if(h.dataset.busy) return;
     const nick=$("#nick").value.trim(), digits=phoneEl.value.replace(/\D/g,"");
     if(!nick) return fail("닉네임을 입력해 주세요.",$("#nick"));
-    if(LIMIT_PLAYS && chancesLeft()<=0) return fail("참여기회를 모두 썼어요. 친구가 내 링크로 체크인하면 1회가 추가돼요.",$("#nick"));
+    if(LIMIT_PLAYS && (!API_ON||S.server) && chancesLeft()<=0) return fail("참여기회를 모두 썼어요. 친구가 내 링크로 체크인하면 1회가 추가돼요.",$("#nick"));
     if(digits && !/^01[016789]\d{7,8}$/.test(digits)) return fail("휴대폰 번호를 다시 확인해 주세요.",phoneEl);
     if(digits && !$("#cPriv").checked) return fail("번호를 남기려면 개인정보 수집·이용에 동의해 주세요. 번호 없이도 참여할 수 있어요.",$("#cPriv"));
     $("#err").textContent="";
     h.dataset.busy=1;
     S.nick=nick.slice(0,10); S.phone=digits?phoneEl.value:""; S.cPriv=!!digits&&$("#cPriv").checked; S.cSms=!!digits&&$("#cSms").checked;
+    saveProfile();
     S.floor=0; S.used=0;
     const btn=$("#go"); btn.disabled=true; btn.classList.add("pressed"); $("#nick").blur();
     const check = API_ON ? (async()=>{
