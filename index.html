@@ -499,8 +499,8 @@ function chanceState(){ try{ return JSON.parse(localStorage.getItem("gp_chance")
 function chancesLeft(){ if(S.server) return S.server.chances; const c=chanceState(); return Math.max(0, BASE_CHANCES + (c.refs||0) - (c.used||0)); }
 function useChance(){ try{ const c=chanceState(); c.used=(c.used||0)+1; localStorage.setItem("gp_chance",JSON.stringify(c)); }catch(e){} }
 function bestRecord(){ try{ return JSON.parse(localStorage.getItem("gp_best")||"null"); }catch(e){ return null; } }
-/* 첫 화면 공유: 한 번이라도 플레이했거나 기회가 0회일 때 보여줌 */
-const showInvite=()=> !!bestRecord() || !!(S.server && S.server.chances<=0);
+/* 첫 화면 공유 버튼: 항상 보여줌 */
+const showInvite=()=> true;
 function inviteText(){
   const b=normBest(bestRecord()), nick=(S.nick||($("#nick")&&$("#nick").value.trim())||"친구").slice(0,10);
   const tok= b ? `vs.${b.cleared}.${b.found||0}.${Math.round((b.time||0)*10)}.${toHex(nick)}.${getUid()}` : `r.${getUid()}`;
