@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta property="og:title" content="HOTEL PULIO 체크인 챌린지">
-<meta property="og:description" content="숨은 낱말을 찾아 5층까지 체크인하세요. 1등과 공유왕에게 경품을 드려요.">
+<meta property="og:description" content="숨은 낱말을 찾아 3층까지 체크인하세요. 1등과 공유왕에게 경품을 드려요.">
 <meta property="og:type" content="website">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font-size:14px}img{max-width:100%}</style>
 <title>HOTEL PULIO 체크인 챌린지</title>
@@ -350,7 +350,7 @@ const BROADCAST = {
   url: "https://lotteimall.soylive.net/?bdct_id=6aec619d43fb3aeda3697654&sy_id=6aec619d43fb3aeda3697654&sy_type=broadcast"
 };
 const datesHTML = () => `<div class="dates">${BROADCAST.dates.map(x=>`<div><span>${x.n}</span><b>${x.d}</b></div>`).join("")}</div>`;
-const DATE_WORD = "11월20일"; // 4층에서 찾는 방송 날짜 낱말 (공백 없이)
+const DATE_WORD = "11월20일"; // 2층에서 찾는 방송 날짜 낱말 (공백 없이)
 /* ===== 배포 설정 ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbymqoTAhfq_6kbXZs_TKJKSKhu4WGvZskdtnMe5EXPBEOBdSsvj6cvSKEelA74Vw0esgQ/exec";   // 구글 Apps Script 웹 앱 URL (비어 있으면 미리보기 모드: 기록 저장·순위 없음)
 const SHARE_URL = "https://hotelpulio-event.github.io/"; // 공유 링크 주소
@@ -379,28 +379,22 @@ const DIRS = {
   diag:[[0,1],[1,0],[1,1]],
   all:[[0,1],[1,0],[1,1],[-1,1],[0,-1],[-1,0],[-1,-1],[1,-1]]
 };
+/* 3개 층 — 낱말은 모두 정방향(가로 →, 세로 ↓, 대각선 ↘)으로만 놓여요 */
 const FLOORS = [
-  {f:1,en:"Lobby",ko:"로비 체크인",n:5,t:30,dirs:"basic",
-   words:["풀리오","가천대","엘라이브","홈쇼핑","본방사수"],
-   msg:"체크인 완료. 엘리베이터가 2층으로 올라갑니다."},
-  {f:2,en:"Recovery Suite",ko:"리커버리 스위트",n:6,t:30,dirs:"diag",pick:4,
+  {f:1,en:"Recovery Suite",ko:"리커버리 스위트",n:6,t:30,dirs:"diag",pick:4,
    words:["목어깨","종아리","풀리지","손마사지기","효도","선물","피로회복"],
    decoys:["목어께","종아라"],
    msg:"목·어깨부터 종아리까지, 오늘 쌓인 피로를 풀어드려요."},
-  {f:3,en:"Grand Opening Hall",ko:"그랜드 오픈 홀",n:7,t:30,dirs:"all",pick:3,digitHeavy:true,
-   words:[DATE_WORD,"13시","본방사수","엘라이브","롯데","풀리오"],
+  {f:2,en:"Grand Opening Hall",ko:"그랜드 오픈 홀",n:8,t:30,dirs:"diag",pick:4,digitHeavy:true,
+   words:[DATE_WORD,"13시","괄사세트","커피쿠폰","마사지건","마사지기"],
    must:[DATE_WORD,"13시"],
-   decoys:["11월2일","1월20일","11월21일","12월20일","11월10일","1월2일","31시","12시"],
+   decoys:["11월2일","1월20일","11월21일","12월20일","31시","12시","괄사셋트","커피쿠퐁","마사지긴"],
    digits:true,
-   msg:"그랜드 오픈은 11월 20일 13시! 이제 경품이 기다리는 4층으로 올라갑니다."},
-  {f:4,en:"Gift Lounge",ko:"기프트 라운지",n:8,t:30,dirs:"all",pick:4,
-   words:["괄사세트","커피쿠폰","마사지건","풀리오","마사지기"],
-   decoys:["괄사셋트","커피쿠퐁","마사지긴","풀리요"],
-   msg:"선물이 가득한 라운지를 지나, 마지막 층으로 올라갑니다."},
-  {f:5,en:"Full-Body Executive Suite",ko:"풀바디 스위트",n:8,t:30,dirs:"all",pick:4,alphaHeavy:true,
+   msg:"그랜드 오픈은 11월 20일 13시! 이제 마지막 층으로 올라갑니다."},
+  {f:3,en:"Full-Body Executive Suite",ko:"풀바디 스위트",n:8,t:30,dirs:"diag",pick:4,alphaHeavy:true,
    words:["풀리오","PULIO","롯데엘라이브","20일13시","홈쇼핑","파워퍼프걸"],
    must:["PULIO"],
-   decoys:["풀리요","PULLO","PUL1O","POLIU","PULI0"],
+   decoys:["풀리요","PULLO","POLIU","PLUIO"],
    digits:true,
    msg:"치열하게 달려온 당신에게 발급되는 VIP 리커버리 키."}
 ];
@@ -459,6 +453,7 @@ function buildBoard(fl0){
     placed.sort((x,y)=>fl.words.indexOf(x.w)-fl.words.indexOf(y.w));
     return {grid:g.flat(), placed};
   }
+  return buildBoard(fl0); // (사실상 일어나지 않음) 다시 생성
 }
 
 /* ---------- 엘리베이터 ---------- */
@@ -491,7 +486,7 @@ async function openDoors(){
 /* ---------- 화면: 로비 (엘리베이터 앞) ---------- */
 /* ---------- 참여기회 ---------- */
 const LIMIT_PLAYS = API_ON; // 서버 연결 시 참여기회 제한 (미리보기에서는 계속 플레이 가능)
-const BASE_CHANCES = 3;
+const BASE_CHANCES = 2;
 /* 경품: 확정되면 여기만 바꾸세요 */
 const PRIZES = [
   {who:"게임 1등", note:"", item:"배민 10,000원 상품권"},
@@ -502,7 +497,7 @@ function chanceState(){ try{ return JSON.parse(localStorage.getItem("gp_chance")
 function chancesLeft(){ if(S.server) return S.server.chances; const c=chanceState(); return Math.max(0, BASE_CHANCES + (c.refs||0) - (c.used||0)); }
 function useChance(){ try{ const c=chanceState(); c.used=(c.used||0)+1; localStorage.setItem("gp_chance",JSON.stringify(c)); }catch(e){} }
 function showLoading(on){ let m=document.getElementById("loadmsg"); if(on&&!m){ m=document.createElement("div"); m.id="loadmsg"; m.className="loadmsg"; m.setAttribute("role","status"); m.textContent="로딩 중…"; document.body.appendChild(m); } else if(!on&&m) m.remove(); }
-function bestRecord(){ try{ return JSON.parse(localStorage.getItem("gp_best")||"null"); }catch(e){ return null; } }
+function bestRecord(){ try{ return JSON.parse(localStorage.getItem("gp_best3")||"null"); }catch(e){ return null; } }
 /* 첫 화면 공유 버튼: 항상 보여줌 */
 const showInvite=()=> true;
 function inviteText(){
@@ -620,7 +615,7 @@ function intro(){
     if(st&&st.ok) applyServer(st); else useChance();
     h.classList.add("enter");
     await wait(450);
-    await closeDoors(`${dialHTML(1,1)}<p class="quote">${esc(S.nick)} 님, 1층 로비에 체크인합니다</p>`);
+    await closeDoors(`${dialHTML(1,1)}<p class="quote">${esc(S.nick)} 님, 1층 리커버리 스위트로 체크인합니다</p>`);
     cab.querySelectorAll(".lamps span")[0].classList.add("lit");
     await wait(400);
     renderFloor(); await openDoors(); startTimer();
@@ -715,9 +710,23 @@ function stopTimer(){ if(S.timer){ clearInterval(S.timer); S.timer=null; } }
 
 /* ---------- 선택 로직 ---------- */
 function bindBoard(){
-  const board=$("#board"), n=FLOORS[S.floor].n, cells=[...board.querySelectorAll(".cell")];
-  let start=null, end=null, dragging=false, moved=false, pending=null;
-  const at=(x,y)=>{ const el=document.elementFromPoint(x,y); const c=el&&el.closest(".cell"); return c?+c.dataset.i:null; };
+  const board=$("#board"), grid=board.querySelector(".grid"), n=FLOORS[S.floor].n, cells=[...board.querySelectorAll(".cell")];
+  let start=null, end=null, dragging=false, moved=false, pending=null, pid=null;
+  const geo=()=>{ const r=grid.getBoundingClientRect(); return {r, w:r.width/n, h:r.height/n}; };
+  /* 좌표 → 칸 번호 (칸 사이 틈을 눌러도 가장 가까운 칸으로) */
+  const at=(x,y)=>{ const {r,w,h}=geo();
+    if(x<r.left-4||x>r.right+4||y<r.top-4||y>r.bottom+4) return null;
+    const c=Math.max(0,Math.min(n-1,Math.floor((x-r.left)/w))), rr=Math.max(0,Math.min(n-1,Math.floor((y-r.top)/h)));
+    return rr*n+c; };
+  /* 드래그: 시작 칸에서 손가락 방향을 가장 가까운 직선(가로·세로·대각선)에 맞춤 — 살짝 비껴 그어도 인식 */
+  const D8=[[0,1],[1,1],[1,0],[1,-1],[0,-1],[-1,-1],[-1,0],[-1,1]];
+  const snap=(a,x,y)=>{ const {r,w,h}=geo(), ra=Math.floor(a/n), ca=a%n;
+    const dx=(x-(r.left+(ca+.5)*w))/w, dy=(y-(r.top+(ra+.5)*h))/h;
+    if(Math.hypot(dx,dy)<0.7) return a;
+    const d=D8[(Math.round(Math.atan2(dy,dx)/(Math.PI/4))+8)%8];
+    let len=Math.max(1,Math.round(d[0]&&d[1] ? (Math.abs(dx)+Math.abs(dy))/2 : Math.abs(d[1]?dx:dy)));
+    while(len>0){ const r2=ra+d[0]*len, c2=ca+d[1]*len; if(r2>=0&&r2<n&&c2>=0&&c2<n) return r2*n+c2; len--; }
+    return a; };
   const line=(a,b)=>{
     const ra=Math.floor(a/n), ca=a%n, rb=Math.floor(b/n), cb=b%n, dr=rb-ra, dc=cb-ca;
     if(!(dr===0||dc===0||Math.abs(dr)===Math.abs(dc))) return null;
@@ -738,25 +747,31 @@ function bindBoard(){
     renderWords();
     if(S.found.length===S.placed.length){ stopTimer(); setTimeout(floorClear,350); }
   };
+  /* 드래그로 긋기 + 첫 글자 → 끝 글자 두 번 누르기 둘 다 지원 */
   board.addEventListener("pointerdown",e=>{
+    if(dragging) return; // 두 번째 손가락 무시
     const i=at(e.clientX,e.clientY); if(i===null) return;
     e.preventDefault();
-    if(pending!==null&&pending!==i){ const p=pending; pending=null; check(p,i); return; }
-    start=i; end=i; dragging=true; moved=false; paint([i]);
+    pid=e.pointerId; try{ board.setPointerCapture(pid); }catch(_){}
+    start=i; end=i; dragging=true; moved=false;
+    paint(pending!==null ? [pending,i] : [i]);
   });
   board.addEventListener("pointermove",e=>{
-    if(!dragging) return;
-    const i=at(e.clientX,e.clientY); if(i===null||i===end) return;
-    end=i; if(i!==start) moved=true;
-    paint(line(start,end)||[start]);
+    if(!dragging||e.pointerId!==pid) return;
+    const i=snap(start,e.clientX,e.clientY); if(i===end) return;
+    end=i; moved = i!==start;
+    paint(moved ? line(start,end) : (pending!==null ? [pending,start] : [start]));
   });
-  board.addEventListener("pointerup",()=>{
-    if(!dragging) return; dragging=false;
-    if(moved){ pending=null; check(start,end); }
-    else if(pending===start){ pending=null; paint([]); }
-    else { pending=start; paint([start]); }
-  });
-  board.addEventListener("pointercancel",()=>{ dragging=false; });
+  const up=e=>{
+    if(!dragging||e.pointerId!==pid) return; dragging=false;
+    try{ board.releasePointerCapture(pid); }catch(_){}
+    if(moved){ pending=null; check(start,end); }          // 드래그
+    else if(pending===null){ pending=start; paint([start]); } // 첫 글자 선택
+    else if(pending===start){ pending=null; paint([]); }      // 같은 칸 다시 누르면 취소
+    else { const p=pending; pending=null; check(p,start); }   // 끝 글자 선택
+  };
+  board.addEventListener("pointerup",up);
+  board.addEventListener("pointercancel",e=>{ if(e.pointerId!==pid) return; dragging=false; paint(pending!==null?[pending]:[]); });
 }
 
 /* ---------- 층 클리어 → 엘리베이터 ---------- */
@@ -764,20 +779,24 @@ async function floorClear(){
   const fl=FLOORS[S.floor];
   if(S.floor===FLOORS.length-1) return result(true);
   const next=FLOORS[S.floor+1];
-  await closeDoors(`
+  const closing=closeDoors(`
     ${dialHTML(fl.f,next.f)}
     <div class="eyebrow">${fl.f}F · ${fl.ko} 클리어</div>
     <p class="quote">${fl.msg}</p>
     <p class="sub">남은 시간 ${fmt(Math.ceil(S.left))}</p>
     <button class="btn" id="up">▲ ${next.f}층으로 올라가기</button>`);
-  const btn=$("#up"); btn.focus();
+  const btn=$("#up");
+  /* 버튼이 보이는 순간부터 바로 눌리게 (문 닫히는 중에 눌러도 닫힌 뒤 이어서 올라감) */
   btn.onclick=async()=>{
+    if(btn.disabled) return;
     btn.disabled=true; btn.style.opacity=".5";
     cab.querySelectorAll(".eyebrow,.quote,.sub").forEach(el=>el.style.opacity=".35");
+    await closing;
     await ride(fl.f,next.f);
     S.floor++; renderFloor();
     await openDoors(); startTimer();
   };
+  await closing; if(!btn.disabled) btn.focus();
 }
 
 /* ---------- 기록 / 도전장 / 랭킹 ---------- */
@@ -794,7 +813,7 @@ function readChallenge(){
     const m=location.hash.match(/^#vs\.(\d+)\.(\d+)\.(\d+)\.([0-9a-f]{2,80})(?:\.([a-z0-9]{4,40}))?$/);
     if(!m) return null;
     const cleared=+m[1], found=+m[2], time=+m[3]/10, top=FLOORS.length;
-    if(cleared>top) return null;
+    if(cleared>top) return m[5] ? {invite:true, uid:m[5], nick:"", cleared:0, found:0, time:0, win:false, floor:1, rank:0} : null; // 예전(5층) 링크도 공유 인정
     const win=cleared===top;
     return {nick:fromHex(m[4]).slice(0,10), uid:m[5]||"", cleared, found, time, win, floor:win?top:cleared+1, rank:rankOf(cleared,found,time)};
   }catch(e){ return null; }
@@ -804,7 +823,7 @@ function normBest(b){ if(!b) return null; if(b.rank) return b;
   const win=b.floor===FLOORS.length; return {...b, win, cleared:win?b.floor:b.floor-1, found:0, time:b.used, rank:rankOf(win?b.floor:b.floor-1,0,b.used)}; }
 
 /* ---------- 결과 ---------- */
-function gradeOf(win){ if(win) return "VIP"; if(S.floor>=3) return "GOLD"; return "STANDARD"; }
+function gradeOf(win){ if(win) return "VIP"; if(S.floor>=2) return "GOLD"; return "STANDARD"; }
 function result(win){
   document.body.classList.add("paper");
   const top=FLOORS.length, fl=FLOORS[S.floor], reached=fl.f, grade=gradeOf(win), key=String(1000+rnd(9000));
@@ -812,7 +831,7 @@ function result(win){
   const R={win, floor:win?top:reached, cleared, found, time:S.used, used:S.used, rank:rankOf(cleared,found,S.used)};
   const best=normBest(bestRecord());
   const isNew=!best||R.rank>best.rank;
-  try{ if(isNew) localStorage.setItem("gp_best",JSON.stringify(R)); }catch(e){}
+  try{ if(isNew) localStorage.setItem("gp_best3",JSON.stringify(R)); }catch(e){}
   S.card={win,grade,reached,key};
 
   const left=S.placed.length-S.found.length;
@@ -823,7 +842,7 @@ function result(win){
   const badges=[];
   badges.push(isNew?`<span class="badge hot">NEW RECORD</span>`:`<span class="badge">내 최고 ${recLabel(best)}</span>`);
   if(!win){
-    if(reached<4) badges.push(`<span class="badge">GOLD까지 ${4-reached}층</span>`);
+    if(reached<3) badges.push(`<span class="badge">GOLD까지 ${3-reached}층</span>`);
     else badges.push(`<span class="badge">VIP까지 ${top-cleared}개 층</span>`);
   }
 
