@@ -385,13 +385,13 @@ const FLOORS = [
    words:["목어깨","종아리","풀리지","손마사지기","효도","선물","피로회복"],
    decoys:["목어께","종아라"],
    msg:"목·어깨부터 종아리까지, 오늘 쌓인 피로를 풀어드려요."},
-  {f:2,en:"Grand Opening Hall",ko:"그랜드 오픈 홀",n:8,t:30,dirs:"diag",pick:4,digitHeavy:true,
+  {f:2,en:"Grand Opening Hall",ko:"그랜드 오픈 홀",n:8,t:20,dirs:"diag",pick:4,digitHeavy:true,
    words:[DATE_WORD,"13시","괄사세트","커피쿠폰","마사지건","마사지기"],
    must:[DATE_WORD,"13시"],
    decoys:["11월2일","1월20일","11월21일","12월20일","31시","12시","괄사셋트","커피쿠퐁","마사지긴"],
    digits:true,
    msg:"그랜드 오픈은 11월 20일 13시! 이제 마지막 층으로 올라갑니다."},
-  {f:3,en:"Full-Body Executive Suite",ko:"풀바디 스위트",n:8,t:30,dirs:"diag",pick:4,alphaHeavy:true,
+  {f:3,en:"Full-Body Executive Suite",ko:"풀바디 스위트",n:8,t:20,dirs:"diag",pick:4,alphaHeavy:true,
    words:["풀리오","PULIO","롯데엘라이브","20일13시","홈쇼핑","파워퍼프걸"],
    must:["PULIO"],
    decoys:["풀리요","PULLO","POLIU","PLUIO"],
@@ -523,7 +523,7 @@ function intro(){
         <div class="plate">
           <div class="eyebrow">Check-in Challenge</div>
           <div class="t">HOTEL PULIO</div>
-          <p class="s">층마다 30초 · 숨은 낱말을 모두 찾으면 다음 층으로</p>
+          <p class="s">1층 30초 · 2·3층 20초<br>숨은 낱말을 모두 찾으면 다음 층으로</p>
           ${S.rival&&!S.rival.invite?`<p class="rival">${esc(S.rival.nick)} 님의 기록 <b>${recLabel(S.rival)}</b> 을 넘어보세요</p>`:""}
           <div class="form">
             <label for="nick" class="sr">닉네임 (필수)</label>
