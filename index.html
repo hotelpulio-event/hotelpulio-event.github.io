@@ -143,7 +143,8 @@ input::placeholder{color:var(--muted)}
 .bar{height:3px;background:var(--line);border-radius:3px;overflow:hidden}
 .bar i{display:block;height:100%;background:var(--gold);transition:width .1s linear}
 .bar.low i{background:var(--warn)}
-.board{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none}
+.board{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:8px;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;-webkit-tap-highlight-color:transparent}
+.board .grid,.board .cell{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .grid{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:4px}
 .cell{aspect-ratio:1;max-width:100%;display:flex;align-items:center;justify-content:center;background:var(--cell);border-radius:7px;
   font-weight:600;font-size:calc(min(100vw - 52px,430px) / var(--n) * .44);color:var(--ink);transition:background .12s}
@@ -749,7 +750,7 @@ function bindBoard(){
   };
   /* 드래그로 긋기 + 첫 글자 → 끝 글자 두 번 누르기 둘 다 지원 */
   board.addEventListener("pointerdown",e=>{
-    if(dragging) return; // 두 번째 손가락 무시
+    if(dragging && !e.isPrimary) return; // 두 번째 손가락 무시 (새 첫 손가락이면 이전 터치가 비정상 종료된 것 → 새로 시작)
     const i=at(e.clientX,e.clientY); if(i===null) return;
     e.preventDefault();
     pid=e.pointerId; try{ board.setPointerCapture(pid); }catch(_){}
@@ -771,7 +772,10 @@ function bindBoard(){
     else { const p=pending; pending=null; check(p,start); }   // 끝 글자 선택
   };
   board.addEventListener("pointerup",up);
-  board.addEventListener("pointercancel",e=>{ if(e.pointerId!==pid) return; dragging=false; paint(pending!==null?[pending]:[]); });
+  /* 폰이 터치를 중간에 취소해도(길게 누르기·알림 등) 누른 것으로 처리 */
+  board.addEventListener("pointercancel",up);
+  board.addEventListener("lostpointercapture",up);
+  board.addEventListener("contextmenu",e=>e.preventDefault());
 }
 
 /* ---------- 층 클리어 → 엘리베이터 ---------- */
