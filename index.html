@@ -982,6 +982,7 @@ function openShare(text){
     <p class="mlead">친구가 이 링크로 <b>접속하면</b><br>내 참여기회가 <b>1회</b> 늘어나요. <small>(친구 1명당 1번)</small><br><small>공유왕은 <b>번호를 남긴 친구</b>만 집계돼요.</small></p>
     <textarea class="copy" id="sharetext" rows="4" readonly>${esc(text)}</textarea>
     <button class="btn" id="copy">문구와 링크 복사</button>
+    ${navigator.share?`<button class="btn ghost" id="nshare">📤 카톡·문자로 바로 보내기</button>`:""}
     <div class="toast" id="toast" role="status"></div>
     <button class="btn ghost" id="mclose">닫기</button>
   </div>`;
@@ -990,12 +991,27 @@ function openShare(text){
   m.addEventListener("click",e=>{ if(e.target===m) close(); });
   m.addEventListener("keydown",e=>{ if(e.key==="Escape") close(); });
   m.querySelector("#mclose").onclick=close;
+  /* 복사: ① 예전 방식(카톡 등 앱 안 브라우저에서도 잘 됨) → ② 최신 방식 → ③ 직접 길게 눌러 복사하도록 전체 선택 */
   m.querySelector("#copy").onclick=()=>{
-    const ta=m.querySelector("#sharetext"), t=m.querySelector("#toast");
-    const fallback=()=>{ ta.focus(); ta.select(); t.textContent="문구를 선택했어요. 복사해서 붙여넣어 주세요."; };
-    const done=()=>{};
-    try{ navigator.clipboard.writeText(ta.value).then(()=>{ t.textContent="복사됐어요! 카톡이나 문자에 붙여넣어 보내세요."; done(); },()=>{ fallback(); done(); }); }catch(e){ fallback(); done(); }
+    const ta=m.querySelector("#sharetext"), t=m.querySelector("#toast"), text=ta.value;
+    const ok=()=>{ t.textContent="복사됐어요! 카톡이나 문자에 붙여넣어 보내세요."; };
+    const manual=()=>{ ta.removeAttribute("readonly"); ta.focus(); try{ ta.setSelectionRange(0,text.length); }catch(_){ ta.select(); }
+      t.textContent="자동 복사가 막혀 있어요. 위 문구를 길게 눌러 '전체 선택 → 복사' 해 주세요."; };
+    const legacy=()=>{ try{
+        const h=document.createElement("textarea"); h.value=text; h.setAttribute("aria-hidden","true");
+        h.style.cssText="position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0";
+        m.appendChild(h); h.focus(); h.select(); h.setSelectionRange(0,text.length);
+        const r=document.execCommand("copy"); h.remove(); return r;
+      }catch(_){ return false; } };
+    if(legacy()){ ok(); return; }
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      let settled=false;
+      const timer=setTimeout(()=>{ if(!settled){ settled=true; manual(); } },1500); // 응답 없이 멈추는 브라우저 대비
+      navigator.clipboard.writeText(text).then(()=>{ if(!settled){ settled=true; clearTimeout(timer); ok(); } },()=>{ if(!settled){ settled=true; clearTimeout(timer); manual(); } });
+    } else manual();
   };
+  const ns=m.querySelector("#nshare");
+  if(ns) ns.onclick=()=>{ navigator.share({text:m.querySelector("#sharetext").value}).catch(()=>{}); };
   m.querySelector("#copy").focus();
 }
 
