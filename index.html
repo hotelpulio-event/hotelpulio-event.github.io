@@ -301,6 +301,8 @@ input::placeholder{color:var(--muted)}
 .chancebox p{margin:0;font-size:13px;color:var(--muted)}
 .chancebox p b{color:var(--ink)}
 .plate .chance{margin:0;font-size:12px;color:var(--muted)}
+.plate .onemore,.chancebox .onemore{margin:6px 0 2px;padding:11px 12px;border-radius:10px;background:var(--gold);color:var(--gold-ink);font-size:17px;font-weight:800;text-align:center;line-height:1.35;word-break:keep-all;align-self:stretch}
+.plate .onemore[hidden],.chancebox .onemore[hidden]{display:none}
 .loadmsg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:60;padding:12px 22px;border-radius:999px;background:rgba(24,12,40,.82);border:1px solid rgba(220,183,109,.5);color:#f3e9d4;font-size:15px;font-weight:600;letter-spacing:.02em;pointer-events:none}
 .loadmsg::after{content:"";display:inline-block;width:12px;height:12px;margin-left:10px;vertical-align:-1px;border:2px solid rgba(243,233,212,.35);border-top-color:#dcb76d;border-radius:50%;animation:spin .8s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -508,6 +510,8 @@ function inviteText(){
 }
 function loadProfile(){ try{ const p=JSON.parse(localStorage.getItem("gp_profile")||"null"); if(p&&!S.nick){ S.nick=p.nick||""; S.phone=p.phone||""; S.cPriv=!!p.cPriv; S.cSms=!!p.cSms; } }catch(e){} }
 function saveProfile(){ try{ localStorage.setItem("gp_profile",JSON.stringify({nick:S.nick,phone:S.phone,cPriv:S.cPriv,cSms:S.cSms})); }catch(e){} }
+function oneMoreOn(){ return LIMIT_PLAYS && (!API_ON||!!S.server) && chancesLeft()<=0; }
+function syncOneMore(){ const z=oneMoreOn(); document.querySelectorAll(".onemore").forEach(e=>{ e.hidden=!z; }); }
 const chanceText=()=> (API_ON&&!S.server) ? "확인 중…" : chancesLeft()+"회";
 function intro(){
   document.body.classList.remove("paper");
@@ -557,6 +561,7 @@ function intro(){
               </details>
             </div>
             <p class="chance">남은 참여기회 <b id="chanceN">${chanceText()}</b></p>
+            <p class="onemore" ${oneMoreOn()?"":"hidden"}>친구 1명만 들어와도<br>한 판 더!</p>
             <button type="button" class="invite" id="invite" ${showInvite()?"":"hidden"}>🔗 공유하고 참여기회 받기</button>
             <p class="err" id="err" role="alert"></p>
           </div>
@@ -579,7 +584,7 @@ function intro(){
     consentEl.hidden=!d.length;
   });
   if(API_ON && !S.visited){ S.visited=true; const ru=(S.rival && S.rival.uid && S.rival.uid!==getUid()) ? S.rival.uid : ""; api("visit",{uid:getUid(), ref:!!ru, refUid:ru}); }
-  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chanceText(); const iv=$("#invite"); if(iv) iv.hidden=!showInvite(); } });
+  if(API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); const n=$("#chanceN"); if(n) n.textContent=chanceText(); const iv=$("#invite"); if(iv) iv.hidden=!showInvite(); syncOneMore(); } });
   $("#invite").onclick=()=>openShare(inviteText());
   const cAll=$("#cAll"), cPriv=$("#cPriv"), cSms=$("#cSms");
   cAll.addEventListener("change",()=>{ cPriv.checked=cSms.checked=cAll.checked; });
@@ -903,6 +908,7 @@ function result(win){
       ${PRIZES.map(x=>`<div class="prow"><span>${x.who}${x.note?`<small>${x.note}</small>`:""}</span><b>${x.item}</b></div>`).join("")}
     </div>
     <div class="chancebox">
+      <p class="onemore" ${oneMoreOn()?"":"hidden"}>친구 1명만 들어와도<br>한 판 더!</p>
       <div><span class="eyebrow">내 참여기회</span><b id="chanceR">${left2}회 남음</b></div>
       <p>친구가 내 링크로 <b>접속하면</b> 1명당 <b>+1회</b>씩 늘어나요${LIMIT_PLAYS?"":" (테스트 중이라 지금은 계속 플레이할 수 있어요)"}</p>
       <div class="sharestat" id="shareStat">${shareStatHTML(getShareStats())}</div>
@@ -926,6 +932,7 @@ async function loadBoard(R){
   const cr=$("#chanceR"); if(cr) cr.textContent=chancesLeft()+"회 남음";
   const ss=$("#shareStat"); if(ss) ss.innerHTML=shareStatHTML(getShareStats());
   const ag=$("#again"); if(ag && LIMIT_PLAYS && chancesLeft()<=0) ag.textContent="공유하고 참여기회 받기";
+  syncOneMore();
   const me=$("#myRank");
   const setMine=(rank,total)=>{ if(me){ me.hidden=false; me.innerHTML=`내 순위 <b>${rank}위</b> <span>/ ${total}명</span>`; } };
   if(res.total>=3){
@@ -971,6 +978,7 @@ function refreshChance(){
   const iv=$("#invite"); if(iv) iv.hidden=!showInvite();
   const ag=$("#again"); if(ag&&LIMIT_PLAYS) ag.textContent= chancesLeft()<=0 ? "공유하고 참여기회 받기" : (ag.dataset.label||"다시 도전하기");
   const n=$("#chanceN"); if(n) n.textContent=chanceText();
+  syncOneMore();
 }
 /* 공유하고 돌아왔을 때 참여기회 다시 확인 */
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden && API_ON) api("stats",{uid:getUid()}).then(res=>{ if(res&&res.ok){ applyServer(res); refreshChance(); } }); });
