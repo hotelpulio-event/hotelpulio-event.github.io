@@ -345,13 +345,13 @@ textarea.copy{width:100%;box-sizing:border-box;font:inherit;font-size:13px;borde
 <script>
 /* ===== 설정: 방송 날짜가 확정되면 여기만 고치면 됩니다 ===== */
 const BROADCAST = {
-  dates: [ {n:"1차 그랜드 오픈", d:"11월 20일 (금) 13시"}, {n:"2차 그랜드 오픈", d:"11월 27일 (금) 15시"} ],
-  short: "1차 11.20(금) · 2차 11.27(금)",
+  dates: [ {n:"그랜드 오픈", d:"11월 27일 (금) 15시"} ],
+  short: "11.27(금) 15시",
   where: "롯데홈쇼핑 엘라이브",
-  url: "https://lotteimall.soylive.net/?bdct_id=6aec619d43fb3aeda3697654&sy_id=6aec619d43fb3aeda3697654&sy_type=broadcast"
+  url: "https://lotteimall.soylive.net/?bdct_id=6aec674b43fb3aeda369d7de"
 };
 const datesHTML = () => `<div class="dates">${BROADCAST.dates.map(x=>`<div><span>${x.n}</span><b>${x.d}</b></div>`).join("")}</div>`;
-const DATE_WORD = "11월20일"; // 2층에서 찾는 방송 날짜 낱말 (공백 없이)
+const DATE_WORD = "11월27일"; // 2층에서 찾는 방송 날짜 낱말 (공백 없이)
 /* ===== 배포 설정 ===== */
 const API_URL = "https://script.google.com/macros/s/AKfycbymqoTAhfq_6kbXZs_TKJKSKhu4WGvZskdtnMe5EXPBEOBdSsvj6cvSKEelA74Vw0esgQ/exec";   // 구글 Apps Script 웹 앱 URL (비어 있으면 미리보기 모드: 기록 저장·순위 없음)
 const SHARE_URL = "https://hotelpulio-event.github.io/"; // 공유 링크 주소
@@ -387,13 +387,13 @@ const FLOORS = [
    decoys:["목어께","종아라"],
    msg:"목·어깨부터 종아리까지, 오늘 쌓인 피로를 풀어드려요."},
   {f:2,en:"Grand Opening Hall",ko:"그랜드 오픈 홀",n:8,t:20,dirs:"diag",pick:4,digitHeavy:true,
-   words:[DATE_WORD,"13시","괄사세트","커피쿠폰","마사지건","마사지기"],
-   must:[DATE_WORD,"13시"],
-   decoys:["11월2일","1월20일","11월21일","12월20일","31시","12시","괄사셋트","커피쿠퐁","마사지긴"],
+   words:[DATE_WORD,"15시","괄사세트","커피쿠폰","마사지건","마사지기"],
+   must:[DATE_WORD,"15시"],
+   decoys:["11월2일","1월27일","11월28일","12월27일","11월7일","51시","16시","괄사셋트","커피쿠퐁","마사지긴"],
    digits:true,
-   msg:"그랜드 오픈은 11월 20일 13시! 이제 마지막 층으로 올라갑니다."},
+   msg:"그랜드 오픈은 11월 27일 15시! 이제 마지막 층으로 올라갑니다."},
   {f:3,en:"Full-Body Executive Suite",ko:"풀바디 스위트",n:8,t:20,dirs:"diag",pick:4,alphaHeavy:true,
-   words:["풀리오","PULIO","롯데엘라이브","20일13시","홈쇼핑","파워퍼프걸"],
+   words:["풀리오","PULIO","롯데엘라이브","27일15시","홈쇼핑","파워퍼프걸"],
    must:["PULIO"],
    decoys:["풀리요","PULLO","POLIU","PLUIO"],
    digits:true,
@@ -550,8 +550,8 @@ function intro(){
               <label class="chk"><input type="checkbox" id="cSms" ${S.cSms?"checked":""}><span><b>[선택]</b> 방송 알림 문자 수신 동의</span></label>
               <details><summary>내용 보기</summary>
                 <ul>
-                  <li>내용: 11월 20일(금) 13시, 11월 27일(금) 15시 롯데홈쇼핑 엘라이브 방송 전 알림 문자 발송</li>
-                  <li>보유 기간: 2차 방송 종료 후 파기</li>
+                  <li>내용: 11월 27일(금) 15시 롯데홈쇼핑 엘라이브 방송 전 알림 문자 발송</li>
+                  <li>보유 기간: 방송 종료 후 파기</li>
                   <li>동의하지 않아도 게임과 경품 이벤트에 참여할 수 있어요</li>
                 </ul>
               </details>
@@ -646,12 +646,11 @@ async function arrive(floor,text,mode="arrive"){
     const plq=cab.querySelector(".plq");
     plq.classList.add("swap");
     await wait(220);
-    const d1=BROADCAST.dates[0], d2=BROADCAST.dates[1];
+    const d1=BROADCAST.dates[0];
     plq.innerHTML=`<div class="again">
         <span class="eyebrow">Last Check</span>
         <p class="big"><b>${d1.d.replace(/ \(.*$/,"")}<br>${d1.d.replace(/^.*\) /,"")}</b>,<br>진짜 확인했죠??</p>
         <p class="sub">${BROADCAST.where}에서 만나요</p>
-        <p class="sub small">놓쳤다면 2차 ${d2.d}도 있어요</p>
       </div>
       <button class="btn" id="seeResult2">네! 꼭 볼게요 · 결과 보기</button>`;
     plq.classList.remove("swap");
